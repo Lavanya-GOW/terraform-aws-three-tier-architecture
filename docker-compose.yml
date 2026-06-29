@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    image: aws-flask-app
+    container_name: aws-flask-app
+
+    ports:
+      - "80:5000"
+
+    restart: unless-stopped
+    environment:
+      WORKERS: 1
+      REDIS_HOST: "redis"
+
+  redis:
+    image: redis
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
