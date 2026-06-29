@@ -1,0 +1,46 @@
+name: Terraform pipeline
+
+on:
+    push:
+        branches:
+            main
+
+        paths:
+            - 'terraform_infra/**'
+
+jobs:
+    apply_terraform:
+        runs-on: ubuntu-latest
+
+        defaults:
+            run:
+                working-directory: terraform_infra
+
+        steps:   
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: ap-south-1
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                terraform_version: 1.15.6
+
+            - name: Initialize Terraform
+              run: terraform init
+
+            - name: Format correction
+              run: terraform fmt -check -recursive
+
+            - name: Validate the configuration
+              run: terraform validate
+
+            - name: Plan the infra
+              id: plan
+              run: terraform plan -out=tfplan
