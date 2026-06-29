@@ -35,7 +35,8 @@ jobs:
         run: |
             docker build \
                 -t lavanyasharma07/terraform-three-tier-aws:${{ github.sha }} \
-                -t lavanyasharma07/terraform-three-tier-aws:latest \ .
+                -t lavanyasharma07/terraform-three-tier-aws:latest \
+                .
 
       - name: Smoke Test Docker Image
         run: |
