@@ -5,7 +5,7 @@ on:
 
 
 jobs:
-    apply_terraform:
+    destroy_terraform:
         runs-on: ubuntu-latest
 
         defaults:
