@@ -4,7 +4,7 @@ resource "aws_launch_template" "backend" {
   instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.backend_sg.id]
   key_name               = var.key_name
-  user_data              = file("${path.module}/scripts/backend_user_data.sh")
+  user_data              = filebase64("${path.module}/scripts/backend_user_data.sh")
 
   lifecycle {
     create_before_destroy = true
