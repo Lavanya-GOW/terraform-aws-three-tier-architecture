@@ -9,7 +9,7 @@ on:
             - 'terraform_infra/**'
 
 jobs:
-    apply_terraform:
+    plan_terraform:
         runs-on: ubuntu-latest
 
         defaults:
