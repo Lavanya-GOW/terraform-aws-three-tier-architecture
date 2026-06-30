@@ -5,6 +5,6 @@ terraform {
     region         = "ap-south-1"
     encrypt        = true
     dynamodb_table = "3-tier-architecture-table"
-    
+
   }
 }
