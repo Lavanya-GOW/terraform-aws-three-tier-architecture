@@ -103,18 +103,12 @@ resource "aws_nat_gateway" "main" {
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = var.route_table_cidr
-    gateway_id = aws_internet_gateway.main.id
-  }
-
 }
 
 resource "aws_route" "public" {
   route_table_id         = aws_route_table.public.id
   gateway_id             = aws_internet_gateway.main.id
-  destination_cidr_block = "11.0.0.0/16"
+  destination_cidr_block = "0.0.0.0/0"
 }
 
 resource "aws_route_table_association" "public" {
@@ -126,67 +120,47 @@ resource "aws_route_table_association" "public" {
 }
 
 resource "aws_route_table" "frontend" {
-  count  = var.enable_nat_gateway ? length(var.availability_zones) : 0
+  count  = length(var.availability_zones)
   vpc_id = aws_vpc.main.id
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.environment}-${var.project}-frontend-rt-${count.index + 1}"
-      Tier = "frontend"
-    }
-  )
 }
 
 resource "aws_route" "frontend_nat" {
-  count                  = var.enable_nat_gateway ? length(var.availability_zones) : 0
+  count                  = length(var.availability_zones)
   route_table_id         = aws_route_table.frontend[count.index].id
-  destination_cidr_block = "12.0.0.0/16"
-  nat_gateway_id         = var.single_nat_gateway ? aws_nat_gateway.main[0].id : aws_nat_gateway.main[count.index].id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main[count.index].id
 }
 
 resource "aws_route_table_association" "frontend" {
+
   count          = length(var.availability_zones)
   subnet_id      = aws_subnet.frontend[count.index].id
-  route_table_id = var.enable_nat_gateway ? aws_route_table.frontend[count.index].id : null
+  route_table_id = aws_route_table.frontend[count.index].id
+
 }
 
 resource "aws_route_table" "backend" {
-  count  = var.enable_nat_gateway ? length(var.availability_zones) : 0
+  count  = length(var.availability_zones)
   vpc_id = aws_vpc.main.id
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.environment}-${var.project}-backend-rt-${count.index + 1}"
-      Tier = "backend"
-    }
-  )
 }
 
 resource "aws_route" "backend_nat" {
-  count                  = var.enable_nat_gateway ? length(var.availability_zones) : 0
+  count                  = length(var.availability_zones)
   route_table_id         = aws_route_table.backend[count.index].id
-  destination_cidr_block = "13.0.0.0/16"
-  nat_gateway_id         = var.single_nat_gateway ? aws_nat_gateway.main[0].id : aws_nat_gateway.main[count.index].id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main[count.index].id
 }
 
 resource "aws_route_table_association" "backend" {
+
   count          = length(var.availability_zones)
   subnet_id      = aws_subnet.backend[count.index].id
-  route_table_id = var.enable_nat_gateway ? aws_route_table.backend[count.index].id : null
+  route_table_id = aws_route_table.backend[count.index].id
+
 }
 
 resource "aws_route_table" "database" {
   vpc_id = aws_vpc.main.id
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.environment}-${var.project}-database-rt"
-      Tier = "database"
-    }
-  )
 }
 
 resource "aws_route_table_association" "database" {

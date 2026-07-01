@@ -87,7 +87,7 @@ variable "key_name" {
 variable "target_group_port" {
   description = "The port for the target group"
   type        = number
-  default     = 5000
+  default     = 80
 }
 
 variable "enable_deletion_protection" {
