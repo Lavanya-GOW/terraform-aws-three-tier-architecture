@@ -50,6 +50,52 @@ resource "aws_lb_target_group" "external_tg" {
   }
 }
 
+resource "aws_lb" "internal_alb" {
+  name               = "${var.environment}-${var.project}-in-alb"
+  internal           = true
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.internal_alb_sg.id]
+  subnets            = aws_subnet.frontend[*].id
+
+  enable_deletion_protection       = var.enable_deletion_protection
+  enable_http2                     = var.enable_http2
+  enable_cross_zone_load_balancing = var.enable_cross_zone_load_balancing
+  idle_timeout                     = var.idle_timeout
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-${var.project}-internal-alb"
+    }
+  )
+}
+
+resource "aws_lb_target_group" "internal_tg" {
+  name     = "${var.environment}-${var.project}-in-tg"
+  port     = 8080
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+
+  health_check {
+    enabled             = true
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    path                = var.health_check_path
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    matcher             = "200-399"
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-${var.project}-internal-tg"
+    }
+  )
+}
+
 resource "aws_lb_listener" "http_listener" {
   load_balancer_arn = aws_lb.external_alb.arn
   port              = 80
@@ -98,6 +144,19 @@ resource "aws_lb_listener_rule" "https_redirect_rule" {
     path_pattern {
       values = ["/*"]
     }
+  }
+
+  tags = var.tags
+}
+
+resource "aws_lb_listener" "internal_http_listener" {
+  load_balancer_arn = aws_lb.internal_alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.internal_tg.arn
   }
 
   tags = var.tags

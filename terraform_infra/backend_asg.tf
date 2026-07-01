@@ -43,7 +43,7 @@ resource "aws_autoscaling_group" "backend_asg" {
   min_size                  = 2
   desired_capacity          = 2
   vpc_zone_identifier       = aws_subnet.backend[*].id
-  target_group_arns         = [aws_lb_target_group.external_tg.arn]
+  target_group_arns         = [aws_lb_target_group.internal_tg.arn]
   health_check_type         = "EC2"
   health_check_grace_period = 300
 

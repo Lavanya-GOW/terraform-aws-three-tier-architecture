@@ -37,6 +37,12 @@ sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 sudo systemctl start docker
 sudo systemctl enable docker
 
+until docker info >/dev/null 2>&1
+do
+    echo "Waiting for Docker daemon..."
+    sleep 2
+done
+
 sudo usermod -aG docker ubuntu
 
 cd /home/ubuntu
@@ -47,6 +53,4 @@ cd /home/ubuntu/terraform-aws-three-tier-architecture
 
 docker --version
 
-sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=latest/" .env
-
-docker compose up -d --build
+HOST_PORT=80 docker compose up -d --build

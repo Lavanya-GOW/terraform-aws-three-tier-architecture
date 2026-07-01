@@ -5,7 +5,7 @@ services:
     container_name: aws-flask-app
 
     ports:
-      - "80:5000"
+      - "${HOST_PORT:-80}:5000"
 
     restart: unless-stopped
     environment:
