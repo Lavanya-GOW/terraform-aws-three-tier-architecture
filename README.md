@@ -1,164 +1,134 @@
-# AWS Three-Tier Flask Application using Terraform, Docker & GitHub Actions
+# ☁️ AWS Three Tier Architecture
 
-## Overview
-
-This project demonstrates the deployment of a production-inspired three-tier application on AWS using Infrastructure as Code (Terraform), containerization (Docker), and CI/CD (GitHub Actions).
-
-The infrastructure is completely provisioned using Terraform and supports automatic scaling, load balancing, and secure networking.
+A production-inspired three-tier architecture deployed on AWS using Terraform, Docker and GitHub Actions.
 
 ---
 
-## Tech Stack
+## 🚀 Features
 
-- AWS
-- Terraform
-- Docker
-- Docker Compose
-- GitHub Actions
-- Flask
-- Redis
-- PostgreSQL (RDS)
+- Infrastructure as Code using Terraform
+- Dockerized Flask Application
+- GitHub Actions CI/CD
 - Auto Scaling Groups
 - Application Load Balancers
-- CloudWatch
-- IAM
-
----
-
-## Architecture
-
-```
-Internet
-    │
-    ▼
-Internet Gateway
-    │
-    ▼
-External Application Load Balancer
-    │
-    ▼
-Frontend Auto Scaling Group
-    │
-    ▼
-Internal Application Load Balancer
-    │
-    ▼
-Backend Auto Scaling Group
-    │
-    ▼
-Amazon RDS PostgreSQL
-```
-
-Infrastructure also includes:
-
 - Bastion Host
-- NAT Gateway
-- Public and Private Subnets
-- Route Tables
-- IAM Roles
-- CloudWatch Alarms
-- Security Groups
+- Amazon RDS PostgreSQL
+- High Availability across Multiple Availability Zones
 - Remote Terraform State
+- CloudWatch Monitoring
+- Secure Networking
 
----
+## 🛠️ Tech Stack
 
-## Features
+| Category | Technologies |
+|----------|--------------|
+| Cloud | AWS |
+| IaC | Terraform |
+| Containers | Docker |
+| CI/CD | GitHub Actions |
+| Language | Python |
+| Database | PostgreSQL |
+| Networking | VPC, NAT Gateway, ALB |
+| Compute | EC2, Auto Scaling |
 
-- Infrastructure as Code
-- Highly Available Architecture
-- Multi-AZ Deployment
-- Automatic Scaling
-- Internal & External Load Balancing
-- CI/CD Pipelines
-- Dockerized Application
-- Bastion Host Access
-- Secure Private Networking
-- Remote Terraform Backend
 
----
+## 🏗️ Architecture
 
-## Repository Structure
+The infrastructure follows a production-inspired three-tier architecture.
 
+Client
+
+↓
+
+External Application Load Balancer
+
+↓
+
+Frontend Auto Scaling Group
+
+↓
+
+Internal Application Load Balancer
+
+↓
+
+Backend Auto Scaling Group
+
+↓
+
+Amazon RDS PostgreSQL
+
+All resources are deployed inside a custom VPC distributed across multiple Availability Zones.
+
+
+## 🚀 Deployment
+
+Clone Repository
+
+```bash
+git clone <repo>
 ```
-.
-├── terraform_infra/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   ├── backend.tf
-│   ├── scripts/
-│   └── ...
-│
-├── .github/
-│   └── workflows/
-│       ├── docker_pipeline.yml
-│       ├── terraform_pipeline.yml
-│       ├── terraform_apply.yml
-│       └── terraform_destroy.yml
-│
-├── Dockerfile
-├── docker-compose.yml
-├── app.py
-├── requirements.txt
-└── README.md
+
+Build Docker
+
+```bash
+docker compose up -d
 ```
 
----
-
-## GitHub Actions
-
-This repository contains four workflows.
-
-### Docker Pipeline
-
-- Build Docker image
-- Push to DockerHub
-- Smoke Test
-
-### Terraform Pipeline
-
-- fmt
-- validate
-- plan
-
-### Terraform Apply
-
-Manual Deployment
-
-### Terraform Destroy
-
-Manual Infrastructure Cleanup
-
----
-
-## Deployment
+Terraform
 
 ```bash
 terraform init
+
 terraform plan
+
 terraform apply
 ```
 
-or
+Destroy
 
-Run the GitHub Actions workflow:
+```bash
+terraform destroy
+```
 
-Terraform Apply
+## ⚙️ CI/CD
 
----
+GitHub Actions automates:
 
-## Future Improvements
+- Docker Image Build
+- DockerHub Push
+- Terraform Validation
+- Terraform Plan
+- Terraform Apply (Manual trigger)
+- Terraform Destroy (Manual trigger)
 
-- Kubernetes Migration
+## 📚 Lessons Learned
+
+During this project I gained practical experience with:
+
+- Terraform debugging
+- Cloud-init troubleshooting
+- User-data execution
+- Docker deployment
+- Auto Scaling Groups
+- Application Load Balancers
+- Target Group Health Checks
+- AWS Networking
+- CI/CD automation
+
+## 🚀 Future Improvements
+
+- Deploy on Amazon EKS
 - Helm Charts
-- ArgoCD
-- Monitoring using Prometheus
-- Grafana
-- EKS Deployment
-- Service Mesh
+- GitOps using ArgoCD
+- Monitoring with Prometheus
+- Grafana Dashboards
+- Blue/Green Deployments
 
----
+## 👨‍💻 Author
 
-## Author
+Lavanya Sharma
 
-Built by Lavanya as part of a Cloud/DevOps learning journey.
+Electrical Engineering Undergraduate @ IIT Jammu
+
+Interested in Cloud Computing, DevOps and Platform Engineering.
