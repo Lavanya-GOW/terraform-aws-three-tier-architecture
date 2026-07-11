@@ -12,10 +12,6 @@
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions)
 ![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)
 
-<p align="center">
-<img src="https://capsule-render.vercel.app/api?type=waving&height=220&text=v2.0 Kubernetes Integration&fontAlign=50&fontAlignY=38&color=0:4F46E5,100:06B6D4&fontSize=45&animation=fadeIn"/>
-</p>
-
 Production-inspired AWS Infrastructure demonstrating Infrastructure as Code, CI/CD, Docker image automation, Kubernetes deployments and scalable cloud architecture.
 
 </div>
@@ -211,7 +207,8 @@ aws-three-tier-architecture/
 │   ├── namespace.yaml
 │   ├── configmaps.yaml
 │   ├── deployment.yaml
-│   ├── service.yaml
+│   ├── frontend-service.yaml
+│   ├── backend-service.yaml
 │   └── statefulset.yaml
 
 ├── images/
