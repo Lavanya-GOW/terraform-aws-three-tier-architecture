@@ -1,22 +1,25 @@
 #!/bin/bash
-set -e
+
+# -----------------------------------------------------------------------------
+# Bootstrap Script
+# Project : AWS Three-Tier Architecture v2
+# Purpose : Provision k3s, deploy Kubernetes manifests, and bootstrap the app.
+# -----------------------------------------------------------------------------
+
+set -euo pipefail
 exec > /var/log/user-data.log 2>&1
 
 date
 
 ip addr
-
 ip route
+nslookup security.ubuntu.com || true
+curl -I http://security.ubuntu.com || true
 
-nslookup security.ubuntu.com
-
-curl http://security.ubuntu.com
-
+echo "Waiting 60 seconds for networking..."
 sleep 60
 
-curl http://security.ubuntu.com
-
-echo "Waiting for apt repositories..."
+curl -I http://security.ubuntu.com || true
 
 until sudo apt update; do
     echo "apt update failed. Retrying in 10 seconds..."
@@ -24,33 +27,54 @@ until sudo apt update; do
 done
 
 sudo apt upgrade -y
-sudo apt install docker.io -y
-sudo apt install git -y
+sudo apt install -y git curl
 
-sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
-sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
--o /usr/local/lib/docker/cli-plugins/docker-compose
+curl -sfL https://get.k3s.io | sh -
 
-sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-sudo systemctl start docker
-sudo systemctl enable docker
-
-until docker info >/dev/null 2>&1
-do
-    echo "Waiting for Docker daemon..."
-    sleep 2
+until kubectl get nodes >/dev/null 2>&1; do
+    echo "Waiting for Kubernetes API..."
+    sleep 10
 done
 
-sudo usermod -aG docker ubuntu
+sudo mkdir -p /home/ubuntu/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/.kube/config
+sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config
+sudo chmod 600 /home/ubuntu/.kube/config
 
 cd /home/ubuntu
 
-git clone https://github.com/Lavanya-GOW/terraform-aws-three-tier-architecture
+if [ ! -d "terraform-aws-three-tier-architecture" ]; then
+    git clone https://github.com/Lavanya-GOW/terraform-aws-three-tier-architecture
+fi
 
-cd /home/ubuntu/terraform-aws-three-tier-architecture
+cd terraform-aws-three-tier-architecture/kubernetes-files
 
-docker --version
+kubectl apply -f namespace.yaml
 
-HOST_PORT=8080 docker compose up -d --build
+kubectl apply -f configmaps.yaml
+
+kubectl apply -f statefulset.yaml
+
+kubectl rollout status statefulset/redis -n three-tier-app
+
+kubectl apply -f deployment.yaml
+
+kubectl apply -f backend-service.yaml
+
+kubectl rollout status deployment/web -n three-tier-app
+
+kubectl logs -l app=flask -n three-tier-app --tail=20 || true
+
+kubectl get nodes
+kubectl get deployments -n three-tier-app
+kubectl get statefulsets -n three-tier-app
+kubectl get pods -o wide -n three-tier-app
+kubectl get svc -n three-tier-app
+kubectl get pvc -n three-tier-app
+
+date
