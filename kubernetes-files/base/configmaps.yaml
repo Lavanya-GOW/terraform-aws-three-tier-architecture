@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: three-tier-app
+  labels:
+    app: redis
+data:
+  REDIS_HOST: redis
+  APP_REDIS_PORT: "6379"

@@ -54,17 +54,21 @@ fi
 
 cd terraform-aws-three-tier-architecture/kubernetes-files
 
-kubectl apply -f namespace.yaml
+kubectl apply -f base/namespace.yaml
 
-kubectl apply -f configmaps.yaml
+kubectl apply -f base/configmaps.yaml
 
-kubectl apply -f statefulset.yaml
+kubectl apply -f redis/redis_service.yaml
+
+kubectl apply -f redis/statefulset.yaml
 
 kubectl rollout status statefulset/redis -n three-tier-app
 
-kubectl apply -f deployment.yaml
+kubectl apply -f base/deployment.yaml
 
-kubectl apply -f backend-service.yaml
+kubectl apply -f backend/backend-service.yaml
+
+kubectl apply -f backend/backend-ingress.yaml
 
 kubectl rollout status deployment/web -n three-tier-app
 
