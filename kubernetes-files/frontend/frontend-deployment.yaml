@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: lavanyasharma07/terraform-three-tier-aws:latest
+        image: lavanyasharma07/frontend-terraform-three-tier-aws:latest
         imagePullPolicy: Always
         env:
           - name: REDIS_HOST
