@@ -69,3 +69,34 @@ resource "aws_iam_instance_profile" "ec2_profile" {
     }
   )
 }
+
+data "aws_iam_policy_document" "ssm_permissions" {
+  statement {
+    sid    = "AllowSSMParameterAccess"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:PutParameter",
+      "ssm:DeleteParameter",
+    ]
+
+    resources = [
+      "arn:aws:ssm:*:*:parameter/k3s/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ssm_permissions" {
+  name        = "${var.environment}-${var.project}-ssm-permissions"
+  description = "Allow EC2 instances to access SSM parameters"
+
+  policy = data.aws_iam_policy_document.ssm_permissions.json
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_permissions" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = aws_iam_policy.ssm_permissions.arn
+}

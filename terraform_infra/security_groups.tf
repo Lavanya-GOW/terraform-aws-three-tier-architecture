@@ -62,36 +62,9 @@ resource "aws_security_group" "external_alb_sg" {
   )
 }
 
-resource "aws_security_group" "internal_alb_sg" {
-  name        = "${var.environment}-${var.project}-internal-alb-sg"
-  description = "Security group for internal ALB"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description     = "Allow HTTP traffic from frontend instances"
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.frontend_sg.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.environment}-${var.project}-internal-alb-sg"
-    }
-  )
-}
-
-resource "aws_security_group" "frontend_sg" {
-  name        = "${var.environment}-${var.project}-frontend-sg"
-  description = "Security group for frontend instances"
+resource "aws_security_group" "worker_sg" {
+  name        = "${var.environment}-${var.project}-worker-sg"
+  description = "Security group for worker instances"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -110,6 +83,14 @@ resource "aws_security_group" "frontend_sg" {
     security_groups = [aws_security_group.external_alb_sg.id]
   }
 
+  ingress {
+    description = "Cluster communication between worker nodes"
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    self        = true
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -120,43 +101,7 @@ resource "aws_security_group" "frontend_sg" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.environment}-${var.project}-frontend-sg"
-    }
-  )
-}
-
-resource "aws_security_group" "backend_sg" {
-  name        = "${var.environment}-${var.project}-backend-sg"
-  description = "Security group for backend instances"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description     = "Allow SSH from bastion host"
-    from_port       = 22
-    to_port         = 22
-    protocol        = "tcp"
-    security_groups = [aws_security_group.bastion_sg.id]
-  }
-
-  ingress {
-    description     = "Allow HTTP from internal ALB"
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    security_groups = [aws_security_group.internal_alb_sg.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.environment}-${var.project}-backend-sg"
+      Name = "${var.environment}-${var.project}-worker-sg"
     }
   )
 }
@@ -167,11 +112,11 @@ resource "aws_security_group" "database_sg" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "Allow PostgreSQL from internal ALB"
+    description     = "Allow PostgreSQL from worker instances"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.internal_alb_sg.id]
+    security_groups = [aws_security_group.worker_sg.id]
   }
 
   egress {
@@ -186,4 +131,39 @@ resource "aws_security_group" "database_sg" {
       Name = "${var.environment}-${var.project}-database-sg"
     }
   )
-}  
+}
+
+resource "aws_security_group" "control_plane_sg" {
+  name        = "${var.environment}-${var.project}-control-plane-sg"
+  description = "Security group for control plane instances"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "Allow SSH from bastion host"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
+  ingress {
+    description     = "Worker node communication with control plane"
+    from_port       = 6443
+    to_port         = 6443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.worker_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-${var.project}-control-plane-sg"
+    }
+  )
+}

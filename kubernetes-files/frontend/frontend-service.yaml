@@ -4,12 +4,10 @@ kind: Service
 metadata:
   name: frontend-service
   namespace: three-tier-app
-  labels:
-    app: flask
 
 spec:
   selector:
-    app: flask
+    app: frontend
 
   ports:
     - protocol: TCP

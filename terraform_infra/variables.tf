@@ -117,7 +117,7 @@ variable "idle_timeout" {
 variable "health_check_path" {
   description = "The path for the health check of the target group"
   type        = string
-  default     = "/health"
+  default     = "/"
 }
 
 variable "certificate_arn" {
