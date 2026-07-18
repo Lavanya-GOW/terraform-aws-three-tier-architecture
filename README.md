@@ -55,92 +55,74 @@ The goal was understanding **why production infrastructure is designed the way i
 - Built entirely using Terraform
 - Production-inspired AWS Networking
 - Infrastructure as Code
-- Kubernetes (k3s) based Deployments
+- Self-managed Multi-Node Kubernetes (k3s) Cluster
 - Docker Image Pipeline
 - GitHub Actions CI/CD
-- Auto Scaling Groups
-- External & Internal Load Balancers
-- Bastion Host
+- Dedicated Kubernetes Control Plane
+- Auto Scaling Worker Nodes
+- External Application Load Balancer
+- Kubernetes Ingress
 - Amazon RDS PostgreSQL
+- Redis StatefulSet
 - CloudWatch Monitoring
 - Remote Terraform State
 - Automated EC2 Bootstrapping using User Data
-- Kubernetes ConfigMaps
-- Kubernetes Deployments
-- Redis StatefulSet
+- SSM-based Cluster Join Automation
+- Separate Frontend & Backend Deployments
+- Namespace Isolation
 - Resource Requests & Limits
 - Liveness & Readiness Probes
-- Namespace Isolation
-- Multi Availability Zone deployment
 
 ---
 
 # 🏗 Architecture
 
 ```
-                     Internet
-                         │
-                         ▼
-           External Application Load Balancer
-                         │
-          ┌──────────────┴──────────────┐
-          ▼                             ▼
-     Frontend ASG                  Frontend ASG
-          │
-     k3s Cluster
-          │
-Frontend Deployment
-          │
-External Service
-          │
-────────────────────────────────────────────
-
-           Internal Application Load Balancer
-
-────────────────────────────────────────────
-          │
-     k3s Cluster
-          │
-Backend Deployment
-          │
-Redis StatefulSet
-          │
-Amazon RDS PostgreSQL
+                 Internet
+                     │
+                     ▼
+      External Application Load Balancer
+                     │
+                     ▼
+            Kubernetes Ingress
+                     │
+                     ▼
+     Multi-Node Kubernetes (k3s) Cluster
+                     │
+        ┌────────────┴────────────┐
+        ▼                         ▼
+ Frontend Deployment      Backend Deployment
+        │                         │
+        └───────────┬─────────────┘
+                    ▼
+            Redis StatefulSet
+                    │
+                    ▼
+         Amazon RDS PostgreSQL
 ```
-
-Every component is deployed inside a custom VPC distributed across multiple Availability Zones.
-
-> **Current Version (v2.0):** Frontend and Backend are deployed in separate Kubernetes (k3s) clusters to preserve compatibility with the existing three-tier infrastructure. A future release will consolidate workloads into a single multi-node Kubernetes cluster before migrating to Amazon EKS.
-
----
 
 # ☁ Infrastructure Components
 
 | Service | Purpose |
 |----------|----------|
 | VPC | Network Isolation |
-| Public Subnets | Load Balancers & Bastion |
-| Frontend Subnets | Frontend Instances |
-| Backend Subnets | Backend Instances |
+| Public Subnets | Load Balancer & Bastion |
+| Application Subnets | Worker Nodes |
 | Database Subnets | PostgreSQL |
 | Internet Gateway | Public Connectivity |
-| NAT Gateway | Outbound Internet for Private Instances |
-| Route Tables | Traffic Routing |
+| NAT Gateway | Private Internet Access |
 | Security Groups | Network Security |
-| Bastion Host | Secure SSH Access |
-| Launch Templates | Instance Configuration |
-| Auto Scaling Groups | High Availability |
-| External ALB | Internet Traffic |
-| Internal ALB | Backend Communication |
-| Target Groups | Health Monitoring |
-| IAM Roles | Secure AWS Permissions |
-| CloudWatch | Monitoring |
-| RDS PostgreSQL | Persistent Database |
-| k3s | Kubernetes Distribution |
-| Kubernetes Deployments | Stateless Workloads |
-| StatefulSets | Persistent Workloads |
-| ConfigMaps | Runtime Configuration |
-| Services | Internal & External Networking |
+| Bastion Host | Secure SSH |
+| External ALB | Public Entry |
+| Control Plane | Kubernetes API |
+| Worker ASG | Kubernetes Workers |
+| IAM | Secure AWS Permissions |
+| SSM Parameter Store | Cluster Join Token |
+| RDS PostgreSQL | Database |
+| Redis | Cache |
+| Kubernetes | Orchestration |
+| Ingress | Traffic Routing |
+| ConfigMaps | Runtime Config |
 
 ---
 
@@ -148,26 +130,18 @@ Every component is deployed inside a custom VPC distributed across multiple Avai
 
 - Infrastructure as Code
 - Automated Infrastructure Provisioning
-- Kubernetes-based Application Deployment
+- Self-managed Kubernetes Cluster
+- Auto Scaling Workers
 - Docker Image Automation
-- Automated EC2 Bootstrapping
-- Auto Scaling
-- Internal Load Balancing
-- External Load Balancing
-- Bastion Host
-- Private Networking
-- PostgreSQL Database
-- Kubernetes ConfigMaps
-- Kubernetes Deployments
+- GitHub Actions CI/CD
+- Kubernetes Ingress
+- Frontend & Backend Deployments
 - Redis StatefulSet
+- PostgreSQL
+- ConfigMaps
 - Namespace Isolation
-- Resource Requests & Limits
-- Health Checks (Readiness & Liveness)
-- GitHub Actions Pipelines
-- Remote Terraform Backend
+- Health Checks
 - CloudWatch Monitoring
-- Production-inspired Folder Structure
-- Infrastructure Automation
 
 ---
 
@@ -179,12 +153,11 @@ Every component is deployed inside a custom VPC distributed across multiple Avai
 | IaC | Terraform |
 | Programming | Python |
 | Containers | Docker |
-| Container Orchestration | Kubernetes (k3s) |
+| Orchestration | Kubernetes (k3s) |
 | CI/CD | GitHub Actions |
-| Database | PostgreSQL & Redis |
-| Networking | VPC, ALB, NAT Gateway |
+| Database | PostgreSQL, Redis |
+| Networking | VPC, ALB, Ingress |
 | Monitoring | CloudWatch |
-| Version Control | Git & GitHub |
 
 ---
 
@@ -203,12 +176,23 @@ aws-three-tier-architecture/
 │   ├── lessons_learned.md
 │   └── roadmap.md
 
-├── kubernetes/
-│   ├── namespace.yaml
-│   ├── configmaps.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── statefulset.yaml
+├── Backend/
+     ├── app.py
+     ├── requirement.txt
+     └── Dockerfile
+
+├── Frontend/
+     ├── app.py
+     ├── requirement.txt
+     └── Dockerfile
+
+
+├── kubernetes-files/
+│   ├── base/
+│   ├── backend/
+│   ├── frontend/
+│   ├── redis/
+│   └── ingress.yaml
 
 ├── images/
 │   └── architecture.png
@@ -216,11 +200,7 @@ aws-three-tier-architecture/
 ├── terraform_infra/
 │   └── scripts/
 
-├── Dockerfile
-
-├── app.py
-
-├── requirements.txt
+├── docker-compose.yml
 
 ├── README.md
 
@@ -232,41 +212,39 @@ aws-three-tier-architecture/
 # 🚧 Roadmap
 
 ## ✅ Version 1
-
-- Terraform Infrastructure
-- Docker Deployment
+- Terraform
+- Docker
 - GitHub Actions
-- Auto Scaling
-- Load Balancers
+- ALB
 - RDS
-- CloudWatch
 
 ## ✅ Version 2
-
-- Kubernetes (k3s)
-- Deployments
+- Kubernetes
 - StatefulSets
 - ConfigMaps
 - Namespace
-- Resource Limits
 - Health Probes
-- Automated Kubernetes Bootstrap
 
-## 🔄 Version 2.1
-
-- Secrets
+## ✅ Version 2.1
 - Ingress
-- Better Networking
 
-## 🚀 Future Versions
+## ✅ Version 3
+- Single Multi-node Cluster
+- Control Plane
+- Worker ASG
+- SSM Cluster Join
+- Separate Frontend & Backend
+- Internal Service Discovery
 
-- Single Multi-Node Kubernetes Cluster
+## 🚀 Future
 - Prometheus
 - Grafana
-- Amazon EKS Migration
-- GitOps (ArgoCD)
-- Horizontal Pod Autoscaler
-- Production Observability
+- EKS
+- ArgoCD
+- HPA
+- Metrics Server
+- Cluster Autoscaler
+- Centralized Logging
 
 ---
 
@@ -282,7 +260,7 @@ aws-three-tier-architecture/
 
 ## 🤝 Acknowledgements
 
-The initial three-tier AWS architecture was inspired by publicly available cloud architecture tutorials. This repository represents my own implementation, debugging process, infrastructure decisions, Kubernetes integration, and continuous evolution into a production-oriented platform.
+The initial AWS architecture was inspired by publicly available cloud architecture tutorials. The Kubernetes architecture, automation, debugging, design decisions and production evolution represent my own implementation.
 
 ---
 
