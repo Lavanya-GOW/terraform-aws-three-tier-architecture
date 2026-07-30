@@ -1,19 +1,42 @@
 from flask import Flask, Response
 import os
 import redis
-from prometheus_client import Counter, Histogram, generate_latest, Gauge, CONTENT_TYPE_LATEST  # type: ignore[import]
 import time
+from prometheus_client import ( # pyright: ignore[reportMissingImports]
+    Counter,
+    Histogram,
+    Gauge,
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
 
-REQUEST_COUNT = Counter("http_requests_total", "Total HTTP Requests", ["method", "endpoint", "http_status"])
-REQUEST_LATENCY = Histogram("http_request_duration_seconds", "HTTP Request Latency", ["method", "endpoint"])
-ACTIVE_REQUESTS = Gauge("active_requests", "Number of Active Requests")
+app = Flask(__name__)
 
+# Prometheus Metrics
+REQUEST_COUNT = Counter(
+    "http_requests_total",
+    "Total HTTP Requests",
+    ["method", "endpoint", "http_status"],
+)
+
+REQUEST_LATENCY = Histogram(
+    "http_request_duration_seconds",
+    "HTTP Request Latency",
+    ["method", "endpoint"],
+)
+
+ACTIVE_REQUESTS = Gauge(
+    "active_requests",
+    "Number of Active Requests",
+)
+
+# Redis Connection
 redis_client = redis.Redis(
     host=os.getenv("REDIS_HOST", "localhost"),
     port=int(os.getenv("APP_REDIS_PORT", 6379)),
-    decode_responses=True
+    decode_responses=True,
 )
-app = Flask(__name__)
+
 
 @app.route("/")
 def home():
@@ -21,36 +44,61 @@ def home():
     start_time = time.time()
 
     try:
-        REQUEST_COUNT.labels(method="GET", endpoint="/", http_status=200).inc()
         count = redis_client.incr("visitor_count")
+
+        REQUEST_COUNT.labels(
+            method="GET",
+            endpoint="/",
+            http_status="200"
+        ).inc()
+
+        return f"""
+        <h1>AWS Production Flask App!</h1>
+        <p>Visitor count: {count}</p>
+        <p>Frontend App is running on port 5000</p>
+        """
+
     except Exception as e:
-        return f"Error occurred: {str(e)}"
+        REQUEST_COUNT.labels(
+            method="GET",
+            endpoint="/",
+            http_status="500"
+        ).inc()
+
+        return f"Error occurred: {str(e)}", 500
 
     finally:
         latency = time.time() - start_time
-        REQUEST_LATENCY.observe(latency)
+
+        REQUEST_LATENCY.labels(
+            method="GET",
+            endpoint="/"
+        ).observe(latency)
+
         ACTIVE_REQUESTS.dec()
-    return f"""
-    <h1>AWS Production Flask App!</h1>
-    <p>Visitor count: {count}</p>
-    <p>Frontend App is running on port 5000</p>
-    """
+
 
 @app.route("/health")
 def health():
     try:
         redis_client.ping()
-        return "Application Healthy"
+        return "Application Healthy", 200
     except Exception as e:
-        return f"Application Unhealthy: {str(e)}"
+        return f"Application Unhealthy: {str(e)}", 500
+
 
 @app.route("/about")
 def about():
     return "Built by Harshu during Cloud Engineering Journey"
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
 
 @app.route("/metrics")
 def metrics():
-    return Response(generate_latest(), 200, {"Content-Type": CONTENT_TYPE_LATEST})
+    return Response(
+        generate_latest(),
+        mimetype=CONTENT_TYPE_LATEST,
+    )
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
