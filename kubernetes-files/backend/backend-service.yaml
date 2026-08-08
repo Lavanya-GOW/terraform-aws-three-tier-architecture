@@ -4,13 +4,16 @@ kind: Service
 metadata:
   name: backend-service
   namespace: three-tier-app
+  labels:
+    app: backend
 
 spec:
   selector:
     app: backend
 
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 8080
       targetPort: 5000
 

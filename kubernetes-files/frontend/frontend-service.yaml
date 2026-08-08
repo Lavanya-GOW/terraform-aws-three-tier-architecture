@@ -4,13 +4,16 @@ kind: Service
 metadata:
   name: frontend-service
   namespace: three-tier-app
+  labels:
+    app: frontend
 
 spec:
   selector:
     app: frontend
 
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 80
       targetPort: 5000
 
