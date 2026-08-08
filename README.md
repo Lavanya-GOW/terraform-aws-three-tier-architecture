@@ -9,8 +9,8 @@
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions)
 ![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)
-![Prometheus](https://shields.io)
-![Grafana](https://shields.io)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
 
 Production-inspired AWS Infrastructure demonstrating Infrastructure as Code, CI/CD, Docker image automation, Kubernetes deployments and scalable cloud architecture.
 
@@ -411,12 +411,6 @@ aws-three-tier-architecture/
 - Cluster Autoscaler
 - Distributed Tracing
 - OpenTelemetry
-
----
-
-## Architecture
-
----
 
 ## 🤝 Acknowledgements
 
