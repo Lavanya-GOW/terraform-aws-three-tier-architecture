@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+
+metadata:
+  name: gmail-alertmanager-config
+  namespace: monitoring
+
+spec:
+  route:
+    receiver: email-notifications
+
+  receivers:
+    - name: email-notifications
+      emailConfigs:
+        - to: sharmalavanya1710@gmail.com
+          from: sharmalavanya1710@gmail.com
+          smarthost: smtp.gmail.com:587
+          authUsername: sharmalavanya1710@gmail.com
+          authPassword:
+            name: gmail-alertmanager-secret
+            key: password
+          sendResolved: true
